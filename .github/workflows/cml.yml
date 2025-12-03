@@ -1,0 +1,36 @@
+name: Model Training & CML
+
+on:
+  push:
+    branches: [ dev ]
+  pull_request:
+    branches: [ test ]
+
+jobs:
+  train-and-report:
+    runs-on: ubuntu-latest
+    container: docker://ghcr.io/iterative/cml:0-dvc2-base1
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Train model
+      env:
+        REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        pip install -r requirements.txt
+        
+        # Pull data with DVC (Simulated here, would need remote setup)
+        # dvc pull
+        
+        # Run training
+        python src/models/train.py
+        
+        # Generate CML Report
+        echo "## Model Metrics" > report.md
+        cat metrics.txt >> report.md # Assuming train.py outputs this or we parse MLflow
+        
+        echo "## Data Viz" >> report.md
+        # cml-publish feature_importance.png --md >> report.md
+        
+        cml send-comment report.md
